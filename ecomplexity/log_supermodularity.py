@@ -33,10 +33,10 @@ def get_frac_logsupermodular(matrix, eci, pci, samples_to_use=None):
         eci (numpy.ndarray): The ECI values for each country.
         pci (numpy.ndarray): The PCI values for each product.
         samples_to_use (int, optional): The sampling parameter that
-            determines the number of countries and products to be used for the 
-            log-supermodularity check. 
+            determines the number of countries and products to be used for the
+            log-supermodularity check.
             If None (default), the full set of countries and products is used,
-            provided the number of elements of the matrix is less than 10,000. 
+            provided the number of elements of the matrix is less than 10,000.
             If the number of elements exceeds 10,000, then roughly 10,000 samples are used.
             If an integer value is provided, roughly that many samples will be used.
 
@@ -52,9 +52,11 @@ def get_frac_logsupermodular(matrix, eci, pci, samples_to_use=None):
             samples_to_use = 1e4
         else:
             samples_to_use = num_elements
-    
+
     if samples_to_use > 1e4:
-        warnings.warn("The number of samples exceeds 10,000. The computation may take a long time.")
+        warnings.warn(
+            "The number of samples exceeds 10,000. The computation may take a long time."
+        )
 
     # Sample countries and products based on the sampling parameter
     if samples_to_use < num_elements:
@@ -63,12 +65,12 @@ def get_frac_logsupermodular(matrix, eci, pci, samples_to_use=None):
         # Products to use = total products * samples_to_use / total elements
         n_sampled_countries = int(np.floor(n_countries * samples_to_use / num_elements))
         n_sampled_products = int(np.floor(n_products * samples_to_use / num_elements))
-        
+
         if n_sampled_products == 0:
             n_sampled_products = 1
         if n_sampled_countries == 0:
             n_sampled_countries = 1
-        
+
         country_indices = np.random.choice(
             n_countries, size=n_sampled_countries, replace=False
         )
@@ -107,15 +109,28 @@ def get_frac_logsupermodular(matrix, eci, pci, samples_to_use=None):
     mij = matrix[np.newaxis, np.newaxis, :, :]  # M[i, j], Shape (1, 1, 2, 4)
 
     # Calculate the ratios using valid_pairs to mask the operations
-    condition_met = np.where(valid_pairs, mipjp / mipj, np.nan) > np.where(
-        valid_pairs, mijp / mij, np.nan
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        left_ratio = np.nan_to_num(
+            np.where(valid_pairs, mipjp / mipj, np.nan), nan=0, posinf=0, neginf=0
+        )
+        right_ratio = np.nan_to_num(
+            np.where(valid_pairs, mijp / mij, np.nan), nan=0, posinf=0, neginf=0
+        )
+    condition_met = left_ratio > right_ratio
 
     # Mask the result with valid_pairs to only consider valid entries
     valid_condition_checks = condition_met & valid_pairs
 
     # Calculate percentage of conditions met
     total_valid = valid_pairs.sum()
+    # If no valid pairs, then warn user
+    if total_valid == 0:
+        warnings.warn(
+            "No valid pairs found for log-supermodularity check. "
+            "This may indicate that the matrix is too small or the ECI and PCI values are not well-defined."
+        )
+        return 0.0
     fraction_log_supermodular = valid_condition_checks.sum() / total_valid
 
     # print(

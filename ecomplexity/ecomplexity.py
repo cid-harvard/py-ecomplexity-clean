@@ -123,6 +123,7 @@ def ecomplexity(
     asymmetric=False,
     knn=None,
     check_logsupermodularity=True,
+    report_logsupermodularity=False,
     verbose=True,
 ):
     """Complexity calculations through the ComplexityData class
@@ -157,6 +158,8 @@ def ecomplexity(
             *default* None.
         check_logsupermodularity: If True (default), check log-supermodularity.
             If int, use roughly that many samples to check log-supermodularity.
+        report_logsupermodularity: If True, print warning if log-supermodularity.
+            If False (default), don't.
         verbose: Print year being processed
 
     Returns:
@@ -229,6 +232,10 @@ def ecomplexity(
 
             frac_log_supermodular = get_frac_logsupermodular(
                 matrix, cdata.eci_t, cdata.pci_t, samples_to_use=samples_to_use
+            )
+
+            print(
+                f"Percentage of pairs compared that meet log-supermodularity condition: {frac_log_supermodular:.2%}"
             )
 
             if frac_log_supermodular < 0.8:
