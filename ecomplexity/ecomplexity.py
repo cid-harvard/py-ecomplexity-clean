@@ -6,6 +6,7 @@ from ecomplexity.calc_proximity import calc_continuous_proximity
 from ecomplexity.ComplexityData import ComplexityData
 from ecomplexity.calc_density import calc_density
 from ecomplexity.coicog import calc_coi_cog
+from ecomplexity.log_supermodularity import get_frac_logsupermodular
 
 
 def reshape_output_to_data(cdata, t):
@@ -121,6 +122,7 @@ def ecomplexity(
     proximity_edgelist=None,
     asymmetric=False,
     knn=None,
+    check_logsupermodularity=True,
     verbose=True,
 ):
     """Complexity calculations through the ComplexityData class
@@ -153,6 +155,8 @@ def ecomplexity(
         knn: Number of nearest neighbors from proximity matrix to use to calculate
             density. Will use entire proximity matrix if None.
             *default* None.
+        check_logsupermodularity: If True (default), check log-supermodularity.
+            If int, use roughly that many samples to check log-supermodularity.
         verbose: Print year being processed
 
     Returns:
@@ -202,6 +206,36 @@ def ecomplexity(
         # Calculate ECI and PCI
         cdata.eci_t, cdata.pci_t = calc_eci_pci(cdata)
 
+        # Check logsupermodularity
+        if check_logsupermodularity:
+            if not continuous or presence_test == "manual":
+                matrix = cdata.mcp_t
+            elif continuous and presence_test == "rpop":
+                matrix = cdata.rpop_t
+            elif continuous and presence_test == "rca":
+                matrix = cdata.rca_t
+
+            # Modify sampling_param for different behaviors
+            # Check if check_logsupermodularity is an int or bool
+            if isinstance(check_logsupermodularity, int):
+                samples_to_use = check_logsupermodularity
+            elif isinstance(check_logsupermodularity, bool):
+                samples_to_use = None
+            else:
+                raise ValueError(
+                    "check_logsupermodularity must be an int or bool, not "
+                    f"{type(check_logsupermodularity)}"
+                )
+
+            frac_log_supermodular = get_frac_logsupermodular(
+                matrix, cdata.eci_t, cdata.pci_t, samples_to_use=samples_to_use
+            )
+
+            if frac_log_supermodular < 0.8:
+                warnings.warn(
+                    f"Year {t}: Log-supermodularity condition is not fully satisfied ({frac_log_supermodular:.2%} of pairs compared satisfy this condition). The ECI and PCI values may not be a true representation of the complexity. More details at: https://growthlab.hks.harvard.edu/publications/structural-ranking-economic-complexity"
+                )
+
         # Check if proximities are pre-computed, otherwise compute from data
         if proximity_edgelist is not None:
             # Take proximity edgelist and convert to matrix
@@ -243,26 +277,26 @@ def ecomplexity(
 
         else:
             # Calculate proximity
-            if continuous == False:
+            if not continuous:
                 prox_mat = calc_discrete_proximity(
                     cdata.mcp_t, cdata.ubiquity_t, asymmetric
                 )
-            elif continuous == True and presence_test == "rpop":
+            elif continuous and presence_test == "rpop":
                 prox_mat = calc_continuous_proximity(cdata.rpop_t, cdata.ubiquity_t)
-            elif continuous == True and presence_test != "rpop":
+            elif continuous and presence_test != "rpop":
                 prox_mat = calc_continuous_proximity(cdata.rca_t, cdata.ubiquity_t)
 
         # Calculate density
         # If there are any nulls in the proximity matrix, drop
-        if continuous == False or presence_test == "manual":
+        if not continuous or presence_test == "manual":
             cdata.density_t = calc_density(
                 rca_or_mcp=cdata.mcp_t, proximity_mat=prox_mat, knn=knn
             )
-        elif continuous == True and presence_test == "rpop":
+        elif continuous and presence_test == "rpop":
             cdata.density_t = calc_density(
                 rca_or_mcp=cdata.rpop_t, proximity_mat=prox_mat, knn=knn
             )
-        elif continuous == True and presence_test == "rca":
+        elif continuous and presence_test == "rca":
             cdata.density_t = calc_density(
                 rca_or_mcp=cdata.rca_t, proximity_mat=prox_mat, knn=knn
             )

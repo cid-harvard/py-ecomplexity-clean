@@ -14,9 +14,9 @@ Explore complexity and associated data using Harvard CID's Atlas tool: <http://a
 ## Tutorial
 
 **Installation**:
-At terminal: `pip install ecomplexity`
+For the latest stable version: `pip install ecomplexity`
 
-If you wish to install the latest version of the package under development, you can install directly from GitHub:
+Latest version of the package under development (untested and possibly with bugs), install directly from GitHub:
 `pip install git+https://github.com/cid-harvard/py-ecomplexity@develop`
 
 **Usage**:
@@ -75,7 +75,8 @@ verbose: Print year being processed
 
 - Why are ECI and PCI are both normalized using ECI's mean and std. dev?
     + This normalization preserves the property that ECI = (mean of PCI of products for which MCP=1)
-
+- What is log-supermodularity?
+    + Refer `ecomplexity/log_supermodularity.py` for a brief explanation. More at Schetter, U. (2019). A Structural Ranking of Economic Complexity (SSRN Scholarly Paper 3485842). https://doi.org/10.2139/ssrn.3485842.
 
 ### References
 
