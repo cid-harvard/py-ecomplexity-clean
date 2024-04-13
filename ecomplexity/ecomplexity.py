@@ -220,8 +220,10 @@ def ecomplexity(
 
             # Modify sampling_param for different behaviors
             # Check if check_logsupermodularity is an int or bool
-            if isinstance(check_logsupermodularity, int):
-                samples_to_use = check_logsupermodularity
+            if isinstance(check_logsupermodularity, (int, float)) and not isinstance(
+                check_logsupermodularity, bool
+            ):
+                samples_to_use = int(check_logsupermodularity)
             elif isinstance(check_logsupermodularity, bool):
                 samples_to_use = None
             else:

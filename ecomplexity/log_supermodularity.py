@@ -18,7 +18,6 @@ In reality, this inequality doesn't hold for every pair of countries and product
 import numpy as np
 import warnings
 
-
 def get_frac_logsupermodular(matrix, eci, pci, samples_to_use=None):
     """
     Check the log-supermodularity of a matrix.
@@ -55,7 +54,7 @@ def get_frac_logsupermodular(matrix, eci, pci, samples_to_use=None):
 
     if samples_to_use > 1e4:
         warnings.warn(
-            "The number of samples exceeds 10,000. The computation may take a long time."
+            f"The number of samples used to compute log-supermodularity ({samples_to_use}), exceeds 10,000. May take a long time."
         )
 
     # Sample countries and products based on the sampling parameter
@@ -77,27 +76,33 @@ def get_frac_logsupermodular(matrix, eci, pci, samples_to_use=None):
         product_indices = np.random.choice(
             n_products, size=n_sampled_products, replace=False
         )
-        # Filter matrix, eci and pci
-        matrix = matrix[country_indices][:, product_indices]
-        eci = eci[country_indices]
-        pci = pci[product_indices]
     else:
         country_indices = np.arange(n_countries)
         product_indices = np.arange(n_products)
 
-    # Create meshgrids of country and product indices
-    country_idx, product_idx = np.meshgrid(
-        np.arange(matrix.shape[0]), np.arange(matrix.shape[1]), indexing="ij"
-    )
+    # Filter matrix, eci and pci based on the sampled indices
+    matrix = matrix[country_indices][:, product_indices]
+    eci = eci[country_indices]
+    pci = pci[product_indices]
+
+    # Sort matrix based on ECI for rows and PCI for columns
+    eci_order = np.argsort(eci)[::-1]
+    pci_order = np.argsort(pci)[::-1]
+    matrix = matrix[eci_order][:, pci_order]
+    eci = eci[eci_order]
+    pci = pci[pci_order]
+
+    # Create meshgrids of country and product indices using np.ogrid
+    country_idx, product_idx = np.ogrid[: matrix.shape[0], : matrix.shape[1]]
     country_idx_comparison = country_idx[:, :, np.newaxis, np.newaxis]
     product_idx_comparison = product_idx[:, :, np.newaxis, np.newaxis]
 
-    country_mask = eci[country_idx] > eci[country_idx_comparison]  # ECI[i'] > ECI[i]
-    product_mask = pci[product_idx] > pci[product_idx_comparison]  # PCI[j'] > PCI[j]
+    # Since the matrix is sorted, any pair of elements i > i' and j > j' is a valid pair
+    valid_pairs = (country_idx_comparison > country_idx) & (
+        product_idx_comparison > product_idx
+    )
 
-    valid_pairs = country_mask & product_mask
-
-    # Check the log-supermodularity condition correctly
+    # Check the log-supermodularity condition
     # Broadcast matrix to four dimensions for different comparisons
     mijp = matrix.reshape(
         (1, matrix.shape[1], matrix.shape[0], 1)
@@ -109,8 +114,7 @@ def get_frac_logsupermodular(matrix, eci, pci, samples_to_use=None):
     mij = matrix[np.newaxis, np.newaxis, :, :]  # M[i, j], Shape (1, 1, 2, 4)
 
     # Calculate the ratios using valid_pairs to mask the operations
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+    with np.errstate(divide='ignore', invalid='ignore'):
         left_ratio = np.nan_to_num(
             np.where(valid_pairs, mipjp / mipj, np.nan), nan=0, posinf=0, neginf=0
         )
@@ -119,11 +123,16 @@ def get_frac_logsupermodular(matrix, eci, pci, samples_to_use=None):
         )
     condition_met = left_ratio > right_ratio
 
-    # Mask the result with valid_pairs to only consider valid entries
-    valid_condition_checks = condition_met & valid_pairs
-
     # Calculate percentage of conditions met
     total_valid = valid_pairs.sum()
+    # The total number of valid pairs for a nxk matrix should be n*(n-1)*k*(k-1)/4
+    n = matrix.shape[0]
+    k = matrix.shape[1]
+    expected_valid = n * (n - 1) * k * (k - 1) / 4
+    if total_valid != expected_valid:
+        warnings.warn(
+            f"Expected {expected_valid} valid pairs, but found {total_valid}."
+        )
     # If no valid pairs, then warn user
     if total_valid == 0:
         warnings.warn(
@@ -131,10 +140,6 @@ def get_frac_logsupermodular(matrix, eci, pci, samples_to_use=None):
             "This may indicate that the matrix is too small or the ECI and PCI values are not well-defined."
         )
         return 0.0
-    fraction_log_supermodular = valid_condition_checks.sum() / total_valid
-
-    # print(
-    #     f"Percentage of valid pairs meeting log-supermodularity condition: {percentage_valid:.2%}"
-    # )
+    fraction_log_supermodular = condition_met.sum() / total_valid
 
     return fraction_log_supermodular
