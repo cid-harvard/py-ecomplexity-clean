@@ -210,13 +210,21 @@ def ecomplexity(
         cdata.eci_t, cdata.pci_t = calc_eci_pci(cdata)
 
         # Check logsupermodularity
+        # If custom mcp matrix is given, then only run log-supermodularity check if mcp is continuous
+        if presence_test == "manual":
+                # Check if cdata.mcp_t is binary (only has 0 and 1 values)
+                if np.all(np.isin(np.unique(cdata.mcp_t), [0, 1])):
+                    if check_logsupermodularity:
+                        warnings.warn("Log-supermodularity check is not applicable for binary mcp matrix. Skipping...")
+                    check_logsupermodularity = False
+
         if check_logsupermodularity:
-            if not continuous or presence_test == "manual":
-                matrix = cdata.mcp_t
-            elif continuous and presence_test == "rpop":
+            if presence_test == "rpop":
                 matrix = cdata.rpop_t
-            elif continuous and presence_test == "rca":
+            elif presence_test == "rca":
                 matrix = cdata.rca_t
+            elif presence_test == "manual":
+                matrix = cdata.mcp_t
 
             # Modify sampling_param for different behaviors
             # Check if check_logsupermodularity is an int or bool
