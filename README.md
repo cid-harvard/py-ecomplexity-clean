@@ -68,6 +68,10 @@ proximity_edgelist: pandas df with cols 'prod1', 'prod2', 'proximity'.
 knn: Number of nearest neighbors from proximity matrix to use to calculate
     density. Will use entire proximity matrix if None.
     *default* None.
+check_logsupermodularity: If True (default), check log-supermodularity.
+    If int, use roughly that many samples to check log-supermodularity.
+report_logsupermodularity: If True, print warning if log-supermodularity.
+    If False (default), don't.
 verbose: Print year being processed
 ```
 
