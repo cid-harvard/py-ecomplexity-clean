@@ -253,7 +253,7 @@ def ecomplexity(
                 f"Percentage of pairs compared that meet log-supermodularity condition: {frac_log_supermodular:.2%}"
             )
 
-            if frac_log_supermodular < 0.8:
+            if frac_log_supermodular <= 0.5:
                 warnings.warn(
                     f"Year {t}: Log-supermodularity condition is not fully satisfied ({frac_log_supermodular:.2%} of pairs compared satisfy this condition). The ECI and PCI values may not be a true representation of the complexity. More details at: https://growthlab.hks.harvard.edu/publications/structural-ranking-economic-complexity"
                 )
