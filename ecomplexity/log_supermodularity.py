@@ -18,6 +18,7 @@ In reality, this inequality doesn't hold for every pair of countries and product
 import numpy as np
 import warnings
 
+
 def get_frac_logsupermodular(matrix, eci, pci, samples_to_use=None):
     """
     Check the log-supermodularity of a matrix.
@@ -31,13 +32,14 @@ def get_frac_logsupermodular(matrix, eci, pci, samples_to_use=None):
         matrix (numpy.ndarray): The input matrix (RCA, RPOP, or MCP).
         eci (numpy.ndarray): The ECI values for each country.
         pci (numpy.ndarray): The PCI values for each product.
-        samples_to_use (int, optional): The sampling parameter that
+        samples_to_use (optional): The sampling parameter that
             determines the number of countries and products to be used for the
-            log-supermodularity check.
+            log-supermodularity check. Takes None, int, or "all".
             If None (default), the full set of countries and products is used,
             provided the number of elements of the matrix is less than 10,000.
             If the number of elements exceeds 10,000, then roughly 10,000 samples are used.
             If an integer value is provided, roughly that many samples will be used.
+            If "all", all elements are used without sampling.
 
     Returns:
         float: The percentage of pairs that satisfy the log-supermodularity condition.
@@ -46,11 +48,23 @@ def get_frac_logsupermodular(matrix, eci, pci, samples_to_use=None):
     num_elements = n_countries * n_products
 
     # Determine the sampling parameter based on the number of comparisons
+    if isinstance(samples_to_use, bool):
+        raise ValueError("samples_to_use cannot be a boolean value.")
+
     if samples_to_use is None:
         if num_elements >= 1e4:
             samples_to_use = 1e4
         else:
             samples_to_use = num_elements
+    elif samples_to_use == "all":
+        samples_to_use = num_elements
+    elif isinstance(samples_to_use, int):
+        pass
+    else:
+        raise ValueError(
+            "samples_to_use should be None, an integer, or 'all'."
+            f" Got {samples_to_use} of type {type(samples_to_use)}."
+        )
 
     if samples_to_use > 1e4:
         warnings.warn(
@@ -114,7 +128,7 @@ def get_frac_logsupermodular(matrix, eci, pci, samples_to_use=None):
     mij = matrix[np.newaxis, np.newaxis, :, :]  # M[i, j], Shape (1, 1, 2, 4)
 
     # Calculate the ratios using valid_pairs to mask the operations
-    with np.errstate(divide='ignore', invalid='ignore'):
+    with np.errstate(divide="ignore", invalid="ignore"):
         left_ratio = np.nan_to_num(
             np.where(valid_pairs, mipjp / mipj, np.nan), nan=0, posinf=0, neginf=0
         )

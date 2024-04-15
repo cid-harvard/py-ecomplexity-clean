@@ -156,8 +156,9 @@ def ecomplexity(
         knn: Number of nearest neighbors from proximity matrix to use to calculate
             density. Will use entire proximity matrix if None.
             *default* None.
-        check_logsupermodularity: If True (default), check log-supermodularity.
+        check_logsupermodularity: If True (default), check log-supermodularity. If False, don't.
             If int, use roughly that many samples to check log-supermodularity.
+            If "all", use all samples to check log-supermodularity.
         report_logsupermodularity: If True, print warning if log-supermodularity.
             If False (default), don't.
         verbose: Print year being processed
@@ -212,11 +213,13 @@ def ecomplexity(
         # Check logsupermodularity
         # If custom mcp matrix is given, then only run log-supermodularity check if mcp is continuous
         if presence_test == "manual":
-                # Check if cdata.mcp_t is binary (only has 0 and 1 values)
-                if np.all(np.isin(np.unique(cdata.mcp_t), [0, 1])):
-                    if check_logsupermodularity:
-                        warnings.warn("Log-supermodularity check is not applicable for binary mcp matrix. Skipping...")
-                    check_logsupermodularity = False
+            # Check if cdata.mcp_t is binary (only has 0 and 1 values)
+            if np.all(np.isin(np.unique(cdata.mcp_t), [0, 1])):
+                if check_logsupermodularity:
+                    warnings.warn(
+                        "Log-supermodularity check is not applicable for binary mcp matrix. Skipping..."
+                    )
+                check_logsupermodularity = False
 
         if check_logsupermodularity:
             if presence_test == "rpop":
@@ -234,9 +237,11 @@ def ecomplexity(
                 samples_to_use = int(check_logsupermodularity)
             elif isinstance(check_logsupermodularity, bool):
                 samples_to_use = None
+            elif check_logsupermodularity == "all":
+                samples_to_use = "all"
             else:
                 raise ValueError(
-                    "check_logsupermodularity must be an int or bool, not "
+                    "check_logsupermodularity must be an int, bool, or 'all' not "
                     f"{type(check_logsupermodularity)}"
                 )
 
