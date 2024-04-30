@@ -68,10 +68,12 @@ proximity_edgelist: pandas df with cols 'prod1', 'prod2', 'proximity'.
 knn: Number of nearest neighbors from proximity matrix to use to calculate
     density. Will use entire proximity matrix if None.
     *default* None.
-check_logsupermodularity: If True (default), check log-supermodularity.
+check_logsupermodularity: If True (default), check log-supermodularity. If False, don't.
     If int, use roughly that many samples to check log-supermodularity.
-report_logsupermodularity: If True, print warning if log-supermodularity.
-    If False (default), don't.
+    If "all", use all samples to check log-supermodularity.
+report_logsupermodularity: If True, print percent of samples that conform to log-supermodularity.
+    If False (default), don't report.
+    Only used if check_logsupermodularity is True.
 verbose: Print year being processed
 ```
 
@@ -81,6 +83,8 @@ verbose: Print year being processed
     + This normalization preserves the property that ECI = (mean of PCI of products for which MCP=1)
 - What is log-supermodularity?
     + Refer `ecomplexity/log_supermodularity.py` for a brief explanation. More at Schetter, U. (2019). A Structural Ranking of Economic Complexity (SSRN Scholarly Paper 3485842). https://doi.org/10.2139/ssrn.3485842.
+- I get different numbers each time I run the log-supermodularity check. How do I set a seed to ensure reproducibility?
+    + Set the seed using `np.random.seed(seed)` before calling `ecomplexity`.
 
 ### References
 

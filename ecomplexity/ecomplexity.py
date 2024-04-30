@@ -159,8 +159,9 @@ def ecomplexity(
         check_logsupermodularity: If True (default), check log-supermodularity. If False, don't.
             If int, use roughly that many samples to check log-supermodularity.
             If "all", use all samples to check log-supermodularity.
-        report_logsupermodularity: If True, print warning if log-supermodularity.
-            If False (default), don't.
+        report_logsupermodularity: If True, print percent of samples that conform to log-supermodularity.
+            If False (default), don't report.
+            Only used if check_logsupermodularity is True.
         verbose: Print year being processed
 
     Returns:
@@ -248,12 +249,12 @@ def ecomplexity(
             frac_log_supermodular = get_frac_logsupermodular(
                 matrix, cdata.eci_t, cdata.pci_t, samples_to_use=samples_to_use
             )
+            if report_logsupermodularity:
+                print(
+                    f"Percentage of pairs compared that meet log-supermodularity condition: {frac_log_supermodular:.2%}"
+                )
 
-            print(
-                f"Percentage of pairs compared that meet log-supermodularity condition: {frac_log_supermodular:.2%}"
-            )
-
-            if frac_log_supermodular <= 0.5:
+            if frac_log_supermodular <= 0.3:
                 warnings.warn(
                     f"Year {t}: Log-supermodularity condition is not fully satisfied ({frac_log_supermodular:.2%} of pairs compared satisfy this condition). The ECI and PCI values may not be a true representation of the complexity. More details at: https://growthlab.hks.harvard.edu/publications/structural-ranking-economic-complexity"
                 )
