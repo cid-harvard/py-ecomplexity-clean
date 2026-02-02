@@ -58,17 +58,17 @@ def conform_to_original_data(cdata, data):
 
 def calc_eci_pci(cdata):
     # Check if diversity or ubiquity is 0 or nan, can cause problems
-    if ((cdata.diversity_t_continuous == 0).sum() > 0) | ((cdata.ubiquity_t_continuous == 0).sum() > 0):
+    if ((cdata.diversity_t == 0).sum() > 0) | ((cdata.ubiquity_t == 0).sum() > 0):
         warnings.warn(
             f"In year {cdata.t}, diversity / ubiquity is 0 for some locs/prods"
         )
 
     # Extract valid elements only
-    cntry_mask = np.argwhere(cdata.diversity_t_continuous == 0).squeeze()
-    prod_mask = np.argwhere(cdata.ubiquity_t_continuous == 0).squeeze()
-    diversity_valid = cdata.diversity_t_continuous[cdata.diversity_t_continuous != 0]
-    ubiquity_valid = cdata.ubiquity_t_continuous[cdata.ubiquity_t_continuous != 0]
-    mcp_valid = cdata.mcp_t_continuous[cdata.diversity_t_continuous != 0, :][:, cdata.ubiquity_t_continuous != 0]
+    cntry_mask = np.argwhere(cdata.diversity_t == 0).squeeze()
+    prod_mask = np.argwhere(cdata.ubiquity_t == 0).squeeze()
+    diversity_valid = cdata.diversity_t[cdata.diversity_t != 0]
+    ubiquity_valid = cdata.ubiquity_t[cdata.ubiquity_t != 0]
+    mcp_valid = cdata.mcp_t[cdata.diversity_t != 0, :][:, cdata.ubiquity_t != 0]
 
     # Calculate ECI and PCI eigenvectors
     mcp1 = mcp_valid / diversity_valid[:, np.newaxis]
@@ -103,8 +103,8 @@ def calc_eci_pci(cdata):
     except Exception as e:
         warnings.warn(f"Unable to calculate eigenvectors for year {cdata.t}")
         print(e)
-        eci_t = np.empty(cdata.mcp_t_continuous.shape[0])
-        pci_t = np.empty(cdata.mcp_t_continuous.shape[1])
+        eci_t = np.empty(cdata.mcp_t.shape[0])
+        pci_t = np.empty(cdata.mcp_t.shape[1])
         eci_t[:] = np.nan
         pci_t[:] = np.nan
 
