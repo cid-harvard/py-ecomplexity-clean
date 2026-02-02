@@ -203,14 +203,14 @@ def ecomplexity(
             cdata.calculate_manual_mcp()
 
         # binary MCP matrix 
+        # cdata.diversity_t = np.nansum(cdata.mcp_t, axis=1)
+        # cdata.ubiquity_t = np.nansum(cdata.mcp_t, axis=0)
+        # a continuous mcp matrix values between 0 and 1 
         cdata.diversity_t = np.nansum(cdata.mcp_t, axis=1)
         cdata.ubiquity_t = np.nansum(cdata.mcp_t, axis=0)
-        # a continuous mcp matrix values between 0 and 1 
-        cdata.diversity_t_continuous = np.nansum(cdata.mcp_t_continuous, axis=1)
-        cdata.ubiquity_t_continuous = np.nansum(cdata.mcp_t_continuous, axis=0)
 
         # If ANY of diversity or ubiquity is 0, warn that eci and pci will be nan
-        if np.any(cdata.diversity_t_continuous == 0) or np.any(cdata.ubiquity_t_continuous == 0):
+        if np.any(cdata.diversity_t == 0) or np.any(cdata.ubiquity_t == 0):
             warnings.warn(
                 f"Year {t}: Diversity or ubiquity is 0, so ECI and PCI will be nan"
             )
